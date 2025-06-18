@@ -1,7 +1,7 @@
 # Career_Dashboard
 Visualize your CV to present yourself through diagrams and charts.
 The required JSON format is the following:
-
+```
 {
     "name": "str",
     "summary": "str",
@@ -18,5 +18,5 @@ The required JSON format is the following:
 	  ...
 	]
 }
-
+```
 Mapping location will be implemented in the next version
