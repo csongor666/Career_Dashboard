@@ -16,6 +16,8 @@ import plotly.figure_factory as ff
 import pydeck as pdk
 import streamlit.components.v1 as components
 import json
+import requests
+import colorsys
 
 # Function to calculate the number of months between two dates
 def calculate_months(start, end):
@@ -29,10 +31,10 @@ def calculate_months(start, end):
     delta_months = total_months % 12
     return total_months, delta_years, delta_months
 
-st.title("Upload your CV")
+st.title("Career Dashboard")
 
 # Fájl feltöltése
-uploaded_file = st.file_uploader("Use JSON format", type="json")
+uploaded_file = st.file_uploader("Upload your CV in JSON format", type="json")
 
 if uploaded_file is not None:
     # JSON beolvasása
@@ -42,7 +44,7 @@ if uploaded_file is not None:
 # data = {
 #     "name": "Csongor Báthory",
 #     "summary": "Data Scientist position",
-#     "timeline": [
+#     "job_list": [
 #         {
 #             "title": "Air Quality Expert",
 #             "company": "National Inspectorate for Environment and Nature",
@@ -96,7 +98,7 @@ if uploaded_file is not None:
         return '\n'.join(textwrap.wrap(text, width))
     
     # Streamlit app
-    st.title("Career Dashboard")
+    
     st.header(f"{data['name']} - {data['summary']}")
     
     st.subheader("Timeline of Positions")
@@ -139,8 +141,6 @@ if uploaded_file is not None:
     df_timeline = pd.DataFrame(timeline_data)
     df_timeline = df_timeline.sort_values('Skill', ascending=True)
     df_timeline = df_timeline.rename(columns={"Skill": "Task", "Start": "Start", "End": "Finish"})
-    
-    import colorsys
     
     def generate_colors(n):
         """Generate n visually distinct colors using HSL color space."""
@@ -298,13 +298,36 @@ if uploaded_file is not None:
         for city, data in city_time.items()
     ])
     
+    # Egyedi városok kigyűjtése
+    cities = set(job['city'] for job in data['job_list'])
     
-    # Define the coordinates for the cities
-    city_coordinates = {
-        "Budapest": [47.4979, 19.0402],
-        "Dubai": [25.276987, 55.296249],
-        "Miskolc": [48.1031, 20.7784]
-    }
+    # Koordináták lekérdezése
+    def get_coordinates(city):
+        url = f"https://nominatim.openstreetmap.org/search?city={city}&format=json"
+        response = requests.get(url, headers={"User-Agent": "streamlit-app"})
+        if response.status_code == 200 and response.json():
+            result = response.json()[0]
+            return float(result['lat']), float(result['lon'])
+        return None
+    
+    # Város-koordináta párok
+    city_coordinates = {}
+    for city in cities:
+        coords = get_coordinates(city)
+        if coords:
+            city_coordinates[city] = coords
+    
+    # # Eredmény megjelenítése
+    # st.write("Lekérdezett város-koordináták:")
+    # st.write(city_coordinates)
+
+    
+    # # Define the coordinates for the cities
+    # city_coordinates = {
+    #     "Budapest": [47.4979, 19.0402],
+    #     "Dubai": [25.276987, 55.296249],
+    #     "Miskolc": [48.1031, 20.7784]
+    # }
     
     # Add coordinates to the DataFrame
     city_time_df["Latitude"] = city_time_df["City"].apply(lambda x: city_coordinates[x][0])
