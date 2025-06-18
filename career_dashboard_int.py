@@ -205,10 +205,14 @@ if uploaded_file is not None:
     for edge in G1.edges():
         net1.add_edge(edge[0], edge[1])
     
-    net1.show("positions_skills.html")
+    # net1.show("positions_skills.html")
     
+    # Generate the network and get the HTML content
+    html_content = net1.generate_html()
+
     st.subheader("Positions and Skills Network")
-    components.html(open("positions_skills.html").read(), height=600)
+    # components.html(open("positions_skills.html").read(), height=600)
+    components.html(html_content, height=600)
     
     # Create the second network: Skills Co-occurrence
     G2 = nx.Graph()
@@ -264,9 +268,11 @@ if uploaded_file is not None:
 
 
     # net2.show_buttons()
-    net2.show("skills_cooccurrence.html")
+    # net2.show("skills_cooccurrence.html")
+    html_content2 = net1.generate_html()
     st.subheader("Skills Co-occurrence Network")
-    components.html(open("skills_cooccurrence.html").read(), height=600)
+    # components.html(open("skills_cooccurrence.html").read(), height=600)
+    components.html(html_content2, height=600)
     
 
     
@@ -320,13 +326,14 @@ if uploaded_file is not None:
     )
     
     r = pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{City}\n{Delta Years} year {Delta Months} month"})
-    r.to_html("city_time_chart.html")
-    
+    # r.to_html("city_time_chart.html")
+    html_content_3 = r.to_html(as_string=True, notebook_display=False)
+
     print("PyDeck chart has been created and saved as city_time_chart.html.")
     
     # net2.show("skills_cooccurrence.html")
     st.subheader("Time spent on location")
-    components.html(open("city_time_chart.html").read(), height=600)
+    components.html(html_content_3, height=600)
     
     
     st.subheader("Raw data")
