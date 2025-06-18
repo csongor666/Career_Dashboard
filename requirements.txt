@@ -7,4 +7,3 @@ networkx
 pyvis
 plotly
 pydeck
-json
