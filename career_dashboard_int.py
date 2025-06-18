@@ -269,7 +269,7 @@ if uploaded_file is not None:
 
     # net2.show_buttons()
     # net2.show("skills_cooccurrence.html")
-    html_content2 = net1.generate_html()
+    html_content2 = net2.generate_html()
     st.subheader("Skills Co-occurrence Network")
     # components.html(open("skills_cooccurrence.html").read(), height=600)
     components.html(html_content2, height=600)
