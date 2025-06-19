@@ -2,7 +2,6 @@
 """
 Created on Tue Jun 17 11:13:00 2025
 
-@author: BAC5MC
 """
 
 import streamlit as st
@@ -62,34 +61,7 @@ if uploaded_file is not None:
 #             "start": "2015-03",
 #             "end": "2016-09",
 #             "skills": ["Air pollution modelling", "Impact study compilation"]
-#         },
-#         {
-#             "title": "Air Quality Expert",
-#             "company": "Vibrocomp FZO Middle East",
-#             "location": "United Arab Emirates",
-#             "city": "Dubai",
-#             "start": "2016-09",
-#             "end": "2017-09",
-#             "skills": ["Impact study compilation", "Air quality measurement", "Project management", "Team working"]
-#         },
-#         {
-#             "title": "Research associate",
-#             "company": "University of Miskolc",
-#             "location": "Hungary",
-#             "city": "Miskolc",
-#             "start": "2018-06",
-#             "end": "2021-12",
-#             "skills": ["Raspberry Pi", "Matlab", "Project management", "Python", "Data analyzing", "Neural network", "Data visualization", "Air pollution modelling", "Air quality measurement"]
-#         },
-#         {
-#             "title": "Test Engineer",
-#             "company": "Robert Bosch Body and Energy Systems Ltd",
-#             "location": "Hungary",
-#             "city": "Miskolc",
-#             "start": "2022-01",
-#             "end": "Present",
-#             "skills": ["Noise and Vibration measurement", "Artemis", "Data analyzing", "Data visualization", "Python", "LabView basics", "Github", "Team working"]
-#         },
+#         }
 #     ]
 # }
 
@@ -159,6 +131,7 @@ if uploaded_file is not None:
     
     # Generate unique colors for each skill
     unique_skills = df_timeline['Task'].unique()
+    #this can make just 10 unique colors, so an other approach needed
     # colors = px.colors.qualitative.Plotly[:len(unique_skills)]
     
     # Create a dictionary to map skills to colors
@@ -188,10 +161,7 @@ if uploaded_file is not None:
     
     # Create PyVis network for Positions and Skills
     net1 = Network(height='600px', width='100%', bgcolor='#ffffff', font_color='black')
-    # Step 4: Use the Json Dictionary that sets the options to specify that I want the color of the node to change to red when clicked on
-    
-    
-    
+
     for node, data_ in G1.nodes(data=True):
         net1.add_node(
             node,
@@ -204,13 +174,14 @@ if uploaded_file is not None:
         )
     for edge in G1.edges():
         net1.add_edge(edge[0], edge[1])
-    
+    # in cloud should not save files
     # net1.show("positions_skills.html")
     
     # Generate the network and get the HTML content
     html_content = net1.generate_html()
 
     st.subheader("Positions and Skills Network")
+    # in cloud should not save files
     # components.html(open("positions_skills.html").read(), height=600)
     components.html(html_content, height=600)
     
@@ -266,16 +237,14 @@ if uploaded_file is not None:
 }
 """)
 
-
+    # in cloud should not save files
     # net2.show_buttons()
     # net2.show("skills_cooccurrence.html")
     html_content2 = net2.generate_html()
     st.subheader("Skills Co-occurrence Network")
     # components.html(open("skills_cooccurrence.html").read(), height=600)
     components.html(html_content2, height=600)
-    
 
-    
     # Calculate the total time spent in each city
     city_time = {}
     for job in data["job_list"]:
@@ -298,10 +267,10 @@ if uploaded_file is not None:
         for city, data in city_time.items()
     ])
     
-    # Egyedi városok kigyűjtése
+    # Collect unique cities
     cities = set(job['city'] for job in data['job_list'])
     
-    # Koordináták lekérdezése
+    # Get coordinates
     def get_coordinates(city):
         url = f"https://nominatim.openstreetmap.org/search?city={city}&format=json"
         response = requests.get(url, headers={"User-Agent": "streamlit-app"})
@@ -310,18 +279,13 @@ if uploaded_file is not None:
             return float(result['lat']), float(result['lon'])
         return None
     
-    # Város-koordináta párok
+    # Make city-coordinate pairs
     city_coordinates = {}
     for city in cities:
         coords = get_coordinates(city)
         if coords:
             city_coordinates[city] = coords
-    
-    # # Eredmény megjelenítése
-    # st.write("Lekérdezett város-koordináták:")
-    # st.write(city_coordinates)
-
-    
+  
     # # Define the coordinates for the cities
     # city_coordinates = {
     #     "Budapest": [47.4979, 19.0402],
@@ -333,7 +297,8 @@ if uploaded_file is not None:
     city_time_df["Latitude"] = city_time_df["City"].apply(lambda x: city_coordinates[x][0])
     city_time_df["Longitude"] = city_time_df["City"].apply(lambda x: city_coordinates[x][1])
     
-    # Create a PyDeck chart 37.86/35.60
+    # Create a PyDeck chart example: lat:37.86 lon:35.60
+    #This part is still static, should upgrade to calculate from the city_time_df["Latitude"]["Longitude"] max-min
     view_state = pdk.ViewState(latitude=37.86, longitude=35.60, zoom=3, pitch=50)
     
     layer = pdk.Layer(
@@ -352,13 +317,10 @@ if uploaded_file is not None:
     # r.to_html("city_time_chart.html")
     html_content_3 = r.to_html(as_string=True, notebook_display=False)
 
-    print("PyDeck chart has been created and saved as city_time_chart.html.")
-    
     # net2.show("skills_cooccurrence.html")
     st.subheader("Time spent on location")
     components.html(html_content_3, height=600)
-    
-    
+
     st.subheader("Raw data")
     
     st.json(
