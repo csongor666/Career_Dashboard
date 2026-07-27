@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jun 17 11:13:00 2025
-Modified: hard-coded CV + button controlled dashboard
+
+Modified version:
+- Keeps JSON file upload option
+- Adds a built-in hard-coded CV button below the title
+- Button name: "CV of Csongor Báthory"
 """
 
 import streamlit as st
@@ -14,8 +18,10 @@ import plotly.express as px
 import plotly.figure_factory as ff
 import pydeck as pdk
 import streamlit.components.v1 as components
+import json
 import requests
 import colorsys
+import copy
 
 
 # -----------------------------------------------------------------------------
@@ -128,6 +134,9 @@ def wrap_text(text, width=15):
 def generate_colors(n):
     """Generate n visually distinct colors using HSL color space."""
     colors = []
+    if n <= 0:
+        return ["#1f77b4"]
+
     for i in range(n):
         hue = i / n
         lightness = (50 + 10 * (i % 2)) / 100
@@ -142,12 +151,27 @@ def generate_colors(n):
     return colors
 
 
+@st.cache_data(show_spinner=False)
 def get_coordinates(city):
-    url = f"https://nominatim.openstreetmap.org/search?city={city}&format=json"
-    response = requests.get(url, headers={"User-Agent": "streamlit-app"})
-    if response.status_code == 200 and response.json():
-        result = response.json()[0]
-        return float(result["lat"]), float(result["lon"])
+    """Get city coordinates from Nominatim, with fallback values for known cities."""
+    fallback_coordinates = {
+        "Budapest": (47.4979, 19.0402),
+        "Dubai": (25.276987, 55.296249),
+        "Miskolc": (48.1031, 20.7784),
+    }
+
+    if city in fallback_coordinates:
+        return fallback_coordinates[city]
+
+    try:
+        url = f"https://nominatim.openstreetmap.org/search?city={city}&format=json"
+        response = requests.get(url, headers={"User-Agent": "streamlit-app"}, timeout=10)
+        if response.status_code == 200 and response.json():
+            result = response.json()[0]
+            return float(result["lat"]), float(result["lon"])
+    except Exception:
+        return None
+
     return None
 
 
@@ -156,24 +180,50 @@ def get_coordinates(city):
 # -----------------------------------------------------------------------------
 st.title("Career Dashboard")
 
-if "show_dashboard" not in st.session_state:
-    st.session_state.show_dashboard = False
+# Session state for selected CV source
+if "selected_data" not in st.session_state:
+    st.session_state.selected_data = None
 
+if "selected_source" not in st.session_state:
+    st.session_state.selected_source = None
+
+# Built-in CV button directly below the title
 if st.button(
     "CV of Csongor Báthory",
     type="primary",
     use_container_width=True,
 ):
-    st.session_state.show_dashboard = True
+    st.session_state.selected_data = copy.deepcopy(CV_DATA)
+    st.session_state.selected_source = "Built-in CV: Csongor Báthory"
 
-if st.session_state.show_dashboard:
-    # Copy the hard-coded data so the original CV_DATA is not modified by the app
-    data = {
-        "name": CV_DATA["name"],
-        "summary": CV_DATA["summary"],
-        "job_list": [job.copy() for job in CV_DATA["job_list"]],
-    }
+# Keep the original file upload possibility
+uploaded_file = st.file_uploader("Upload your CV in JSON format", type="json")
 
+if uploaded_file is not None:
+    try:
+        st.session_state.selected_data = json.load(uploaded_file)
+        st.session_state.selected_source = f"Uploaded file: {uploaded_file.name}"
+    except Exception as error:
+        st.error(f"Could not read the uploaded JSON file: {error}")
+
+# Dashboard rendering
+if st.session_state.selected_data is not None:
+    data = copy.deepcopy(st.session_state.selected_data)
+
+    if st.session_state.selected_source:
+        st.success(f"Loaded: {st.session_state.selected_source}")
+
+    # Helper validation
+    required_keys = ["name", "summary", "job_list"]
+    missing_keys = [key for key in required_keys if key not in data]
+
+    if missing_keys:
+        st.error(f"The selected CV JSON is missing required keys: {missing_keys}")
+        st.stop()
+
+    # -------------------------------------------------------------------------
+    # Header
+    # -------------------------------------------------------------------------
     st.header(f"{data['name']} - {data['summary']}")
 
     # -------------------------------------------------------------------------
@@ -183,6 +233,8 @@ if st.session_state.show_dashboard:
 
     timeline_df = pd.DataFrame(data["job_list"])
     timeline_df["start"] = pd.to_datetime(timeline_df["start"])
+
+    # Replace 'Present' with today's date
     timeline_df["end"] = timeline_df["end"].replace(
         "Present",
         datetime.datetime.today().strftime("%Y-%m"),
@@ -228,7 +280,7 @@ if st.session_state.show_dashboard:
     )
 
     unique_skills = df_timeline["Task"].unique()
-    unique_colors = generate_colors(max(len(unique_skills), 1))
+    unique_colors = generate_colors(len(unique_skills))
     skill_color_map = {skill: unique_colors[i] for i, skill in enumerate(unique_skills)}
 
     fig = ff.create_gantt(
@@ -346,10 +398,7 @@ if st.session_state.show_dashboard:
     city_time = {}
     for job in data["job_list"]:
         city = job["city"]
-        total_months, delta_years, delta_months = calculate_months(
-            job["start"],
-            job["end"],
-        )
+        total_months, delta_years, delta_months = calculate_months(job["start"], job["end"])
         if city in city_time:
             city_time[city]["total_months"] += total_months
             city_time[city]["delta_years"] += delta_years
@@ -381,32 +430,39 @@ if st.session_state.show_dashboard:
         if coords:
             city_coordinates[city] = coords
 
-    city_time_df["Latitude"] = city_time_df["City"].apply(lambda x: city_coordinates[x][0])
-    city_time_df["Longitude"] = city_time_df["City"].apply(lambda x: city_coordinates[x][1])
+    # Keep only cities with available coordinates
+    city_time_df = city_time_df[city_time_df["City"].isin(city_coordinates.keys())]
 
-    view_state = pdk.ViewState(latitude=37.86, longitude=35.60, zoom=3, pitch=50)
+    if not city_time_df.empty:
+        city_time_df["Latitude"] = city_time_df["City"].apply(lambda x: city_coordinates[x][0])
+        city_time_df["Longitude"] = city_time_df["City"].apply(lambda x: city_coordinates[x][1])
 
-    layer = pdk.Layer(
-        "ColumnLayer",
-        data=city_time_df,
-        get_position=["Longitude", "Latitude"],
-        get_elevation="Months",
-        elevation_scale=7000,
-        radius=55000,
-        get_color="[200, 30, 0, 160]",
-        pickable=True,
-        auto_highlight=True,
-    )
+        view_state = pdk.ViewState(latitude=37.86, longitude=35.60, zoom=3, pitch=50)
 
-    r = pdk.Deck(
-        layers=[layer],
-        initial_view_state=view_state,
-        tooltip={"text": "{City}\n{Delta Years} year {Delta Months} month"},
-    )
-    html_content_3 = r.to_html(as_string=True, notebook_display=False)
+        layer = pdk.Layer(
+            "ColumnLayer",
+            data=city_time_df,
+            get_position=["Longitude", "Latitude"],
+            get_elevation="Months",
+            elevation_scale=7000,
+            radius=55000,
+            get_color="[200, 30, 0, 160]",
+            pickable=True,
+            auto_highlight=True,
+        )
 
-    st.subheader("Time spent on location")
-    components.html(html_content_3, height=600)
+        r = pdk.Deck(
+            layers=[layer],
+            initial_view_state=view_state,
+            tooltip={"text": "{City}\n{Delta Years} year {Delta Months} month"},
+        )
+        html_content_3 = r.to_html(as_string=True, notebook_display=False)
+
+        st.subheader("Time spent on location")
+        components.html(html_content_3, height=600)
+    else:
+        st.subheader("Time spent on location")
+        st.warning("No city coordinates could be resolved for the selected CV.")
 
     # -------------------------------------------------------------------------
     # Raw data
@@ -415,4 +471,4 @@ if st.session_state.show_dashboard:
     st.json(data, expanded=2)
 
 else:
-    st.info('Click the "CV of Csongor Báthory" button to open the dashboard.')
+    st.info('Select the built-in CV with the "CV of Csongor Báthory" button or upload a JSON CV file.')
