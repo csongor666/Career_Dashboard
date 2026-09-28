@@ -347,7 +347,7 @@ if st.session_state.selected_data is not None:
     html_content = net1.generate_html()
 
     st.subheader("Positions and Skills Network")
-    components.html(html_content, height=700)
+    components.html(html_content, height=620)
     
 
     # -------------------------------------------------------------------------
@@ -411,7 +411,7 @@ if st.session_state.selected_data is not None:
     html_content2 = net2.generate_html()
 
     st.subheader("Skills Co-occurrence Network")
-    components.html(html_content2, height=600)
+    components.html(html_content2, height=620)
 
     # -------------------------------------------------------------------------
     # Time spent on location
