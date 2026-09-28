@@ -300,8 +300,8 @@ if st.session_state.selected_data is not None:
             "Task": False,
         },
     )
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor="lightgray")
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor="lightgray")
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor="lightgray", showline=True,linewidth=1,linecolor="lightgray", mirror=True)
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor="lightgray", showline=True,linewidth=1,linecolor="lightgray", mirror=True)
     fig.update_layout(
         title="",
         xaxis_title="Time",
