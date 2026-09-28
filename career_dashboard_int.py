@@ -249,6 +249,7 @@ if st.session_state.selected_data is not None:
         color="company",
     )
     fig.update_layout(xaxis_title="Date", yaxis_title="Position")
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor="lightgray")
     st.plotly_chart(fig, width="stretch")
 
     # -------------------------------------------------------------------------
@@ -304,7 +305,7 @@ if st.session_state.selected_data is not None:
         yaxis_title="Skills",
         showlegend=False,
         hoverlabel=dict(namelength=-1),
-        showgrid=True,
+
     )
 
 
