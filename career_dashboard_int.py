@@ -328,6 +328,7 @@ if st.session_state.selected_data is not None:
             G1.add_edge(job_title, wrapped_skill)
 
     net1 = Network(height="600px", width="100%", bgcolor="#ffffff", font_color="black")
+    
 
     for node, data_ in G1.nodes(data=True):
         net1.add_node(
@@ -346,7 +347,8 @@ if st.session_state.selected_data is not None:
     html_content = net1.generate_html()
 
     st.subheader("Positions and Skills Network")
-    components.html(html_content, height=600)
+    components.html(html_content, height=700)
+    
 
     # -------------------------------------------------------------------------
     # Skills Co-occurrence Network
