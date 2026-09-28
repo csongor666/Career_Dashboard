@@ -304,37 +304,9 @@ if st.session_state.selected_data is not None:
         yaxis_title="Skills",
         showlegend=False,
         hoverlabel=dict(namelength=-1),
-    )
-    fig.update_xaxes(
-    showgrid=True,
-    gridwidth=1,
-    gridcolor="lightgray",
-    showline=True,
-    linewidth=1,
-    linecolor="black",
-    mirror=True
-    )
-    
-    fig.update_yaxes(
         showgrid=True,
-        gridwidth=1,
-        gridcolor="lightgray",
-        showline=True,
-        linewidth=1,
-        linecolor="black",
-        mirror=True
     )
-    
-    fig.update_layout(
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        margin=dict(
-            l=40,
-            r=20,
-            t=40,
-            b=40
-        )
-    )
+
 
     st.plotly_chart(fig, width="stretch")
 
