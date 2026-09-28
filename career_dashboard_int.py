@@ -250,6 +250,7 @@ if st.session_state.selected_data is not None:
     )
     fig.update_layout(xaxis_title="Date", yaxis_title="Position")
     fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor="lightgray")
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor="lightgray")
     st.plotly_chart(fig, width="stretch")
 
     # -------------------------------------------------------------------------
@@ -299,6 +300,8 @@ if st.session_state.selected_data is not None:
             "Task": False,
         },
     )
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor="lightgray")
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor="lightgray")
     fig.update_layout(
         title="",
         xaxis_title="Time",
