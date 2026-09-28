@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jun 17 11:13:00 2025
+@author: BAC5MC
 
 Modified version:
 - Keeps JSON file upload option
@@ -15,7 +16,6 @@ import textwrap
 import networkx as nx
 from pyvis.network import Network
 import plotly.express as px
-import plotly.figure_factory as ff
 import pydeck as pdk
 import streamlit.components.v1 as components
 import json
@@ -191,7 +191,7 @@ if "selected_source" not in st.session_state:
 if st.button(
     "CV of Csongor Báthory",
     type="primary",
-    use_container_width=True,
+    width="stretch",
 ):
     st.session_state.selected_data = copy.deepcopy(CV_DATA)
     st.session_state.selected_source = "Built-in CV: Csongor Báthory"
@@ -249,7 +249,7 @@ if st.session_state.selected_data is not None:
         color="company",
     )
     fig.update_layout(xaxis_title="Date", yaxis_title="Position")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # -------------------------------------------------------------------------
     # Timeline of Skills
@@ -283,17 +283,29 @@ if st.session_state.selected_data is not None:
     unique_colors = generate_colors(len(unique_skills))
     skill_color_map = {skill: unique_colors[i] for i, skill in enumerate(unique_skills)}
 
-    fig = ff.create_gantt(
+    fig = px.timeline(
         df_timeline,
-        index_col="Task",
-        show_colorbar=False,
-        group_tasks=True,
-        colors=skill_color_map,
-        task_names=df_timeline["Company"],
-        show_hover_fill=True,
+        x_start="Start",
+        x_end="Finish",
+        y="Task",
+        color="Task",
+        color_discrete_map=skill_color_map,
+        hover_name="Task",
+        hover_data={
+            "Company": True,
+            "Start": "|%Y-%m",
+            "Finish": "|%Y-%m",
+            "Task": False,
+        },
     )
-    fig.update_layout(title="", xaxis_title="Time", yaxis_title="Skills")
-    st.plotly_chart(fig, use_container_width=True)
+    fig.update_layout(
+        title="",
+        xaxis_title="Time",
+        yaxis_title="Skills",
+        showlegend=False,
+        hoverlabel=dict(namelength=-1),
+    )
+    st.plotly_chart(fig, width="stretch")
 
     # -------------------------------------------------------------------------
     # Positions and Skills Network
